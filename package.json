@@ -1,0 +1,40 @@
+{
+  "name": "test_task",
+  "version": "0.0.1",
+  "dependencies": {
+    "@babel/core": "latest",
+    "@babel/node": "latest",
+    "@babel/plugin-proposal-class-properties": "latest",
+    "@babel/preset-env": "latest",
+    "@babel/preset-react": "latest",
+    "@material-ui/core": "latest",
+    "@material-ui/styles": "latest",
+    "axios": "^0.19.0",
+    "babel-loader": "latest",
+    "body-parser": "^1.19.0",
+    "clsx": "^1.0.4",
+    "cross-env": "latest",
+    "css-loader": "^3.2.0",
+    "downshift": "^3.2.12",
+    "express": "latest",
+    "lodash": "^4.17.15",
+    "mini-css-extract-plugin": "^0.8.0",
+    "moment": "^2.24.0",
+    "nodemon": "latest",
+    "npm-run-all": "latest",
+    "react": "latest",
+    "react-datepicker": "^2.9.3",
+    "react-datetime": "^2.16.3",
+    "react-dom": "latest",
+    "react-select": "^3.0.4",
+    "redux": "^4.0.4",
+    "webpack": "latest",
+    "webpack-cli": "latest"
+  },
+  "scripts": {
+    "start": "npm-run-all -p build serve",
+    "build": "webpack -w",
+    "serve": "nodemon --ignore ./build --exec babel-node -- server.js",
+    "production": "cross-env NODE_ENV=production npm start"
+  }
+}
