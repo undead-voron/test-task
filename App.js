@@ -41,6 +41,27 @@ const isValidTicket = ticket => {
     && ticket.departureTime
 };
 
+const ticketsToRoutes = (routes, ticket) => {
+  routes.push({
+    city: ticket.departureCity.name,
+    date: moment(ticket.departureTime).add(ticket.departureCity.timeOffset, 'm'),
+  });
+  routes.push({
+    city: ticket.arrivalCity.name,
+    date: moment(ticket.arrivalTime).add(ticket.departureCity.timeOffset, 'm'),
+  });
+  return routes;
+};
+
+const sortingRoutes = (routeA, routeB) => routeA.date.diff(routeB.date);
+
+const sortTickets = tickets => {
+  const validTickets = tickets.filter(ticket => isValidTicket(ticket));
+  const routes = validTickets.reduce(ticketsToRoutes, []);
+
+  return routes.sort(sortingRoutes);
+};
+
 class CardInner extends React.Component {
   constructor(props) {
     super(props);
@@ -131,6 +152,8 @@ export default class Ticket extends React.Component {
 
   render() {
 
+    const orderedDestinations = sortTickets(this.state.tickets);
+
     return (
       <Container
         style={{
@@ -159,15 +182,22 @@ export default class Ticket extends React.Component {
             />
           </Box>
         ))}
+        <br/>
         <div>
           {this.state.tickets.map((ticket, index) => {
             const arrivalTime = moment(ticket.arrivalTime).add(ticket.arrivalCity.timeOffset, 'm');
-            const departureTime = moment(ticket.departureTime).add(ticket.departureCity.timeOffset, 'm')
+            const departureTime = moment(ticket.departureTime).add(ticket.departureCity.timeOffset, 'm');
             return !isValidTicket(ticket) ? (<div key={`flight-${index}`}><b>Ticket {index + 1}:</b> Fill out the ticket</div>) : (<div key={`flight-${index}`}><b>Ticket {index + 1}:</b>
               Flight from {ticket.departureCity.name} at {moment(ticket.departureTime).format("MM/DD LT")} to {ticket.arrivalCity.name} at {moment(ticket.arrivalTime).format("MM/DD LT")}
               <br/>Flight length: { arrivalTime.isBefore(departureTime) ? 'incorrect time' : moment.duration(arrivalTime.diff(departureTime)).humanize()}
             </div>)})}
         </div>
+        <br/>
+        <div>
+          Ordered trip: {orderedDestinations.map(route => route.city).join(' --> ')}
+        </div>
+        <br/>
+        <br/>
         <Button
           variant="contained"
           style={{
@@ -178,6 +208,8 @@ export default class Ticket extends React.Component {
           Add ticket
         </Button>
 
+        <br/>
+        <br/>
       </Container>
     );
   }
