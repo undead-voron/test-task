@@ -68,6 +68,7 @@ class CardInner extends React.Component {
               <DatePicker
                 selected={this.state.flightDate}
                 showTimeSelect
+                inline
                 onChange={ date => {
                   this.setState({flightDate: date});
                   this.props.setTime(date);
