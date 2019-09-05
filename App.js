@@ -9,30 +9,89 @@ import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import moment from 'moment';
 
-const onInputChange = (inputId, map, bounds, dataListener) => {
-  const marker = new google.maps.Marker({
-    map,
-    anchorPoint: new google.maps.Point(0, -29)
-  });
-  marker.setVisible(false);
 
-  const input = document.getElementById(inputId);
-  const autocomplete = new google.maps.places.Autocomplete(input);
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    console.log('select place', {place}, place.geometry.location.lng(), place.geometry.location.lat());
+// don't create marker, if it already exists.
 
-    bounds.extend(place.geometry.location);
+const allMarckersCache = () => {
+	const markersPlaces = {};
+	return ({inputId, map, bounds}, dataListener) => {
+		const marker = new google.maps.Marker({
+			map,
+			anchorPoint: new google.maps.Point(0, -29)
+		});
+		marker.setVisible(false);
 
-    map.fitBounds(bounds);
+		const input = document.getElementById(inputId);
+		const autocomplete = new google.maps.places.Autocomplete(input);
+		autocomplete.addListener('place_changed', (...args) => {
+			const place = autocomplete.getPlace();
+			const { name, utc_offset_minutes, id } = place;
 
-    marker.setPosition(place.geometry.location);
-    marker.setVisible(true);
+			console.log('select place', {args, autocomplete, place, lng: place.geometry.location.lng(), lat: place.geometry.location.lat()});
 
-    const { name, utc_offset_minutes } = place;
-    dataListener({name, timeOffset: utc_offset_minutes});
-  });
+			bounds.extend(place.geometry.location);
+
+			map.fitBounds(bounds);
+
+			let doubledMarker = false;
+			for (let cachedMarker in markersPlaces) {
+				if (markersPlaces[cachedMarker] === place.id && (cachedMarker !== inputId)) {
+					doubledMarker = true;
+				}
+			}
+
+			marker.setPosition(place.geometry.location);
+
+			if (markersPlaces[inputId]) {
+				console.log('changing existing marker');
+				if (doubledMarker) {
+					console.log('marker place is occupied');
+					marker.setVisible(false);
+				} else {
+					console.log('marker place is vacant');
+					marker.setVisible(true);
+					markersPlaces[inputId] = place.id;
+				}
+			} else {
+				console.log('creating new marker');
+				if (!doubledMarker) {
+					console.log('marker place is vacant');
+					marker.setVisible(true);
+					markersPlaces[inputId] = place.id;
+				}
+			}
+
+			dataListener({ name, timeOffset: utc_offset_minutes, id });
+		});
+	};
 };
+
+
+// const onInputChange = ({inputId, map, bounds}, dataListener) => {
+// 	const marker = new google.maps.Marker({
+// 		map,
+// 		anchorPoint: new google.maps.Point(0, -29)
+// 	});
+// 	marker.setVisible(false);
+//
+// 	const input = document.getElementById(inputId);
+// 	const autocomplete = new google.maps.places.Autocomplete(input);
+// 	autocomplete.addListener('place_changed', (...args) => {
+// 		const place = autocomplete.getPlace();
+// 		console.log('select place', {args, autocomplete, place, lng: place.geometry.location.lng(), lat: place.geometry.location.lat()});
+//
+// 		bounds.extend(place.geometry.location);
+//
+// 		map.fitBounds(bounds);
+//
+// 		marker.setPosition(place.geometry.location);
+// 		marker.setVisible(true);
+//
+// 		const { name, utc_offset_minutes, id } = place;
+// 		dataListener({ name, timeOffset: utc_offset_minutes, id });
+// 	});
+// };
+const onInputChange = allMarckersCache();
 
 const isValidTicket = ticket => {
   return ticket.departureCity.name
@@ -72,7 +131,7 @@ class CardInner extends React.Component {
 
   componentDidMount() {
     const { inputId, map, mapBounds, changeTicketCity } = this.props;
-    onInputChange( inputId, map, mapBounds, changeTicketCity );
+    onInputChange( {inputId, map, bounds: mapBounds}, changeTicketCity );
     this.props.setTime(this.state.flightDate);
   }
 
@@ -81,7 +140,7 @@ class CardInner extends React.Component {
         <Card>
           <div>
             <CardContent>
-              <Typography component="h2">{this.props.title}</Typography>
+              <Typography component="h2" align="center">{this.props.title}</Typography>
               <TextField
                 style={{display: 'block', padding: '20px'}}
                 id={this.props.inputId}
@@ -108,6 +167,7 @@ export default class Ticket extends React.Component {
     super(props);
     this.state = {
       tickets: [],
+      cities: [],
       isVisible: false,
     };
     this.addTicket = this.addTicket.bind(this);
@@ -124,6 +184,7 @@ export default class Ticket extends React.Component {
     this.setState({
       isVisible: true,
     });
+    window.mainApp = this;
   }
 
   addTicket() {
@@ -131,23 +192,67 @@ export default class Ticket extends React.Component {
       departureCity: {
         name: '',
         timeOffset: 0,
+        id: '',
       },
       departureTime: 0,
       arrivalCity: {
         name: '',
         timeOffset: 0,
+        id: '',
       },
       arrivalTime: 0,
     }]});
   }
 
   changeTicketData(index, key, data) {
-    // console.log('changeing ticket data', {index, prefix, data});
+    console.log('before setting ticket data', {index, key, data});
     const tickets = [...this.state.tickets];
     tickets[index][key] = data;
     this.setState({
       tickets,
-    })
+    });
+    const cities = [...this.state.cities];
+    // TODO: save ticket index to avoid save cities that were changed!
+    if (key.includes('City')) {
+      const dateKey = key.includes('departure') ? 'departureTime' : 'arrivalTime';
+      const cityIndex = cities.findIndex(city => city.id === data.id);
+      console.log('manage city adding');
+
+      if (cityIndex === -1) {
+        const city = { id: data.id, name: data.name };
+        if (tickets[index][dateKey]) {
+          city[key.includes('departure') ? 'departure' : 'arrival'] = tickets[index][dateKey];
+        }
+        cities.push(city);
+      }
+      this.setState({
+        cities,
+      });
+    } else {
+      console.log('handle time setting');
+
+      // check departure city
+      if (
+        (key.includes('departure') && tickets[index].departureCity.id)
+        || (key.includes('arrival') && tickets[index].arrivalCity.id)
+      ) {
+        const cityKey = key.includes('departure') ? 'departureCity' : 'arrivalCity';
+        const setKey = key.includes('departure') ? 'departure' : 'arrival';
+        const cityIndex = cities.findIndex(city => city.id === tickets[index][cityKey].id);
+        if (cityIndex === -1) {
+          cities.push({
+            id: tickets[index][cityKey].id,
+            name: tickets[index][cityKey].name,
+            [setKey]: data,
+          });
+        } else {
+          cities[cityIndex][setKey] = data;
+        }
+        this.setState({
+          cities,
+        });
+      }
+    }
   }
 
   render() {
@@ -207,7 +312,6 @@ export default class Ticket extends React.Component {
         >
           Add ticket
         </Button>
-
         <br/>
         <br/>
       </Container>
