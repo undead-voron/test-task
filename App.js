@@ -70,12 +70,30 @@ const allMarckersCache = () => {
 
 const onInputChange = allMarckersCache();
 
-const calcRoutes = citiesList => {
+/*const calcRoutes = citiesList => {
 	const cities = [...citiesList];
 
 
 
-};
+};*/
+
+const populateCities = (citiesList, tickets) => citiesList.map( ({ id }) => {
+	const departure = tickets.find(ticket => ticket.departureCity.id === id);
+	const arrival = tickets.find(ticket => ticket.arrivalCity.id === id);
+	const cityObj = { id };
+
+	if (departure) {
+		cityObj.departure = departure.departureTime;
+		cityObj.name = departure.departureCity.name;
+	}
+
+	if (arrival) {
+		cityObj.arrival = arrival.arrivalTime;
+		cityObj.name = arrival.arrivalCity.name;
+	}
+
+	return cityObj;
+});
 
 const isValidTicket = ticket => {
 	return ticket.departureCity.name
@@ -210,10 +228,10 @@ export default class Ticket extends React.Component {
 			const cityIndex = cities.findIndex(city => city.id === data.id);
 			console.log('manage city adding');
 
-			const city = cityIndex === -1 ? { id: data.id, name: data.name, timeOffset: data.timeOffset } : cities[cityIndex];
-			if (tickets[index][dateKey]) {
-				city[key.includes('departure') ? 'departure' : 'arrival'] = tickets[index][dateKey];
-			}
+			const city = cityIndex === -1 ? { id: data.id, /*name: data.name, timeOffset: data.timeOffset*/ } : cities[cityIndex];
+			// if (tickets[index][dateKey]) {
+			// 	city[key.includes('departure') ? 'departure' : 'arrival'] = tickets[index][dateKey];
+			// }
 			if (cityIndex === -1) {
 				// const city = { id: data.id, name: data.name };
 
@@ -232,6 +250,8 @@ export default class Ticket extends React.Component {
 				cities.splice(indexToRemove, 1);
 			}
 
+			// TODO validate arrival/departure time;
+
 			this.setState({
 				cities,
 			});
@@ -249,12 +269,12 @@ export default class Ticket extends React.Component {
 				if (cityIndex === -1) {
 					cities.push({
 						id: tickets[index][cityKey].id,
-						name: tickets[index][cityKey].name,
-						timeOffset: tickets[index][cityKey].timeOffset,
-						[setKey]: data,
+//						name: tickets[index][cityKey].name,
+//						timeOffset: tickets[index][cityKey].timeOffset,
+//						[setKey]: data,
 					});
 				} else {
-					cities[cityIndex][setKey] = data;
+//					cities[cityIndex][setKey] = data;
 				}
 				this.setState({
 					cities,
@@ -269,6 +289,9 @@ export default class Ticket extends React.Component {
 
 		const possibleRoutes = [];
 		console.log(this.state.cities);
+		const cities = populateCities([...this.state.cities], [...this.state.tickets]);
+
+		console.log('populated cities', cities);
 
 		return (
 			<Container
