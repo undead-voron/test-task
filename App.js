@@ -35,7 +35,9 @@ class CardInner extends React.Component {
 
 	render() {
 		return <div>
-			<CardContent>
+			<CardContent
+				align="center"
+			>
 				<Typography component="h2" align="center">{this.props.title}</Typography>
 				<TextField
 					style={{display: 'block', padding: '20px'}}
@@ -66,7 +68,6 @@ export default class Ticket extends React.Component {
 			isVisible: false,
 		};
 		this.addTicket = this.addTicket.bind(this);
-		// this.changeTicketData = this.changeTicketData.bind(this);
 	}
 
 	componentDidMount() {
@@ -101,8 +102,6 @@ export default class Ticket extends React.Component {
 
 	changeTicketData(index, key, data) {
 
-		// TODO: remove city if it was changed
-
 		const tickets = [...this.state.tickets];
 		const cacheCityIds = {
 			departure: this.state.tickets[index].departureCity.id,
@@ -112,12 +111,10 @@ export default class Ticket extends React.Component {
 		this.setState({
 			tickets,
 		});
-		console.log('changeTicketData ', {index, key, data}, cacheCityIds);
 		const cities = [...this.state.cities];
 		// TODO: save ticket index to avoid save cities that were changed!
 		if (key.includes('City')) {
 			const cityIndex = cities.findIndex(city => city.id === data.id);
-			console.log('manage city adding');
 
 			const city = cityIndex === -1 ? { id: data.id, /*name: data.name, timeOffset: data.timeOffset*/ } : cities[cityIndex];
 
@@ -131,7 +128,6 @@ export default class Ticket extends React.Component {
 
 			if (cachedCityId && !isCityUsed) {
 				const indexToRemove = cities.findIndex(city => city.id === cachedCityId);
-				console.log('removing city with index', indexToRemove, ' el ', cities[indexToRemove]);
 				cities.splice(indexToRemove, 1);
 			}
 
@@ -140,7 +136,6 @@ export default class Ticket extends React.Component {
 				cities,
 			});
 		} else {
-			console.log('handle time setting');
 
 			// check departure city
 			if (

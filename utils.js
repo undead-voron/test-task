@@ -22,33 +22,14 @@ export const allMarckersCache = () => {
 			const place = autocomplete.getPlace();
 			const { name, utc_offset_minutes, id } = place;
 
-			console.log('select place', {args, autocomplete, place, lng: place.geometry.location.lng(), lat: place.geometry.location.lat()});
-
 			bounds.extend(place.geometry.location);
 
 			map.fitBounds(bounds);
 
-			let doubledMarker = false;
-
 			marker.setPosition(place.geometry.location);
 
-			if (markersPlaces[inputId]) {
-				console.log('changing existing marker');
-				if (doubledMarker) {
-					console.log('marker place is occupied');
-					marker.setVisible(false);
-				} else {
-					console.log('marker place is vacant');
-					marker.setVisible(true);
-					markersPlaces[inputId] = place.id;
-				}
-			} else {
-				if (!doubledMarker) {
-					console.log('marker place is vacant');
-					marker.setVisible(true);
-					markersPlaces[inputId] = place.id;
-				}
-			}
+			marker.setVisible(true);
+			markersPlaces[inputId] = place.id;
 
 			dataListener({ name, timeOffset: utc_offset_minutes, id });
 		});
@@ -75,7 +56,6 @@ export const populateCities = (citiesList, tickets) => citiesList.map( ({ id }) 
 
 export const createRoutes = (citiesArray, itemToPopulate) => {
 
-	console.log('creating routes for ', {citiesArray, itemToPopulate});
 	const cities = cloneDeep(citiesArray);
 	const cityIndex = cities.findIndex(({id}) => id === itemToPopulate.id);
 
@@ -90,7 +70,7 @@ export const createRoutes = (citiesArray, itemToPopulate) => {
 	return itemToPopulate;
 };
 
-export const routeEl = (city, prefix = '') => (city.routes.length ? city.routes.map(route =>  routeEl(route, prefix + city.name + ' -> ')) : <div>{prefix + city.name}<br/><br/></div> );
+export const routeEl = (city, prefix = '') => (city.routes.length ? city.routes.map(route => routeEl(route, prefix + city.name + ' -> ')) : <div>{prefix + city.name}<br/><br/></div> );
 
 export const isValidTicket = ticket => {
 	return ticket.departureCity.name
