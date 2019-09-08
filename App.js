@@ -8,6 +8,7 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import moment from 'moment';
+import { cloneDeep } from 'lodash';
 
 
 // don't create marker, if it already exists.
@@ -36,11 +37,6 @@ const allMarckersCache = () => {
 			map.fitBounds(bounds);
 
 			let doubledMarker = false;
-			for (let cachedMarker in markersPlaces) {
-				if (markersPlaces[cachedMarker] === place.id && (cachedMarker !== inputId)) {
-					doubledMarker = true;
-				}
-			}
 
 			marker.setPosition(place.geometry.location);
 
@@ -70,12 +66,6 @@ const allMarckersCache = () => {
 
 const onInputChange = allMarckersCache();
 
-/*const calcRoutes = citiesList => {
-	const cities = [...citiesList];
-
-
-
-};*/
 
 const populateCities = (citiesList, tickets) => citiesList.map( ({ id }) => {
 	const departure = tickets.find(ticket => ticket.departureCity.id === id);
@@ -83,17 +73,36 @@ const populateCities = (citiesList, tickets) => citiesList.map( ({ id }) => {
 	const cityObj = { id };
 
 	if (departure) {
-		cityObj.departure = departure.departureTime;
+		cityObj.departure = moment(departure.departureTime).add(departure.departureCity.timeOffset);
 		cityObj.name = departure.departureCity.name;
 	}
 
 	if (arrival) {
-		cityObj.arrival = arrival.arrivalTime;
+		cityObj.arrival = moment(arrival.arrivalTime).add(arrival.arrivalCity.timeOffset);
 		cityObj.name = arrival.arrivalCity.name;
 	}
 
 	return cityObj;
 });
+
+const createRoutes = (citiesArray, itemToPopulate) => {
+
+	console.log('creating routes for ', {citiesArray, itemToPopulate});
+	const cities = cloneDeep(citiesArray);
+	const cityIndex = cities.findIndex(({id}) => id === itemToPopulate.id);
+
+	cities.splice(cityIndex, 1);
+
+	itemToPopulate.routes = cities.filter(city => {
+		// check if arrival into the checking city is befor arriving in the city from the list.
+		return (!city.arrival || city.arrival.isAfter(itemToPopulate.departure || itemToPopulate.arrival))
+			&& (!city.departure || city.departure.isAfter(itemToPopulate.departure || itemToPopulate.arrival))
+	}).map(city => createRoutes(cities, city));
+
+	return itemToPopulate;
+};
+
+const routeEl = (city, prefix = '') => (city.routes.length ? city.routes.map(route =>  routeEl(route, prefix + city.name + ' -> ')) : <div>{prefix + city.name}<br/><br/></div> );
 
 const isValidTicket = ticket => {
 	return ticket.departureCity.name
@@ -118,7 +127,7 @@ const ticketsToRoutes = (routes, ticket) => {
 const sortingRoutes = (routeA, routeB) => routeA.date.diff(routeB.date);
 
 const sortTickets = tickets => {
-	const validTickets = tickets.filter(ticket => isValidTicket(ticket));
+	const validTickets = tickets.filter((ticket, index) => isValidTicket(ticket) && (index === tickets.lastIndexOf(t => t.id === ticket.id)));
 	const routes = validTickets.reduce(ticketsToRoutes, []);
 
 	return routes.sort(sortingRoutes);
@@ -287,11 +296,14 @@ export default class Ticket extends React.Component {
 
 		const orderedDestinations = sortTickets(this.state.tickets);
 
-		const possibleRoutes = [];
-		console.log(this.state.cities);
+		// console.log(this.state.cities);
 		const cities = populateCities([...this.state.cities], [...this.state.tickets]);
 
-		console.log('populated cities', cities);
+		// console.log('populated cities', cities);
+		const sortedCities = cities.map(city => createRoutes(cities, city));
+		// console.log({sortedCities});
+
+		const possibleRoutes = sortedCities.map(city => city.routes.length ? routeEl(city) : '');
 
 		return (
 			<Container
@@ -335,6 +347,8 @@ export default class Ticket extends React.Component {
 				<div>
 					Ordered trip: {orderedDestinations.map(route => route.city).join(' --> ')}
 				</div>
+				<br/>
+				<div>Routes: {possibleRoutes}</div>
 				<br/>
 				<br/>
 				<Button
