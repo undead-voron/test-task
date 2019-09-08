@@ -119,21 +119,16 @@ export default class Ticket extends React.Component {
 		const cities = [...this.state.cities];
 		// TODO: save ticket index to avoid save cities that were changed!
 		if (key.includes('City')) {
-			const dateKey = key.includes('departure') ? 'departureTime' : 'arrivalTime';
 			const cityIndex = cities.findIndex(city => city.id === data.id);
 			console.log('manage city adding');
 
 			const city = cityIndex === -1 ? { id: data.id, /*name: data.name, timeOffset: data.timeOffset*/ } : cities[cityIndex];
 
 			if (cityIndex === -1) {
-				// const city = { id: data.id, name: data.name };
-
-				// if (this.state.tickets[index][key.includes('departure') ? ])
 				cities.push(city);
 			}
 
 			// check if city was fully removed from all the tickets and delete it from list off cities for routes
-
 			const cachedCityId = cacheCityIds[key.includes('departure') ? 'departure' : 'arrival'];
 			const isCityUsed = this.state.tickets.find(ticket => ticket.departureCity.id === cachedCityId || ticket.arrivalCity.id === cachedCityId);
 
@@ -157,17 +152,11 @@ export default class Ticket extends React.Component {
 				|| (key.includes('arrival') && tickets[index].arrivalCity.id)
 			) {
 				const cityKey = key.includes('departure') ? 'departureCity' : 'arrivalCity';
-				const setKey = key.includes('departure') ? 'departure' : 'arrival';
 				const cityIndex = cities.findIndex(city => city.id === tickets[index][cityKey].id);
 				if (cityIndex === -1) {
 					cities.push({
 						id: tickets[index][cityKey].id,
-//						name: tickets[index][cityKey].name,
-//						timeOffset: tickets[index][cityKey].timeOffset,
-//						[setKey]: data,
 					});
-				} else {
-//					cities[cityIndex][setKey] = data;
 				}
 				this.setState({
 					cities,

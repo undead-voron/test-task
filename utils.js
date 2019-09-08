@@ -43,7 +43,6 @@ export const allMarckersCache = () => {
 					markersPlaces[inputId] = place.id;
 				}
 			} else {
-				console.log('creating new marker');
 				if (!doubledMarker) {
 					console.log('marker place is vacant');
 					marker.setVisible(true);
