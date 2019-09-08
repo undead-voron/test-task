@@ -35,28 +35,25 @@ class CardInner extends React.Component {
 
 	render() {
 		return <div>
-				<Card>
-					<div>
-						<CardContent>
-							<Typography component="h2" align="center">{this.props.title}</Typography>
-							<TextField
-								style={{display: 'block', padding: '20px'}}
-								id={this.props.inputId}
-							/>
-							<DatePicker
-								selected={this.state.flightDate}
-								showTimeSelect
-								inline
-								onChange={ date => {
-									this.setState({flightDate: date});
-									this.props.setTime(date);
-								}}
-								placeholderText="Select a date between today and 5 days in the future"
-							/>
-						</CardContent>
-					</div>
-				</Card>
+			<CardContent>
+				<Typography component="h2" align="center">{this.props.title}</Typography>
+				<TextField
+					style={{display: 'block', padding: '20px'}}
+					id={this.props.inputId}
+				/>
+				<DatePicker
+					selected={this.state.flightDate}
+					showTimeSelect
+					inline
+					onChange={ date => {
+						this.setState({flightDate: date});
+						this.props.setTime(date);
+					}}
+					placeholderText="Select a date between today and 5 days in the future"
+				/>
+			</CardContent>
 			</div>
+
 	}
 }
 
@@ -139,7 +136,6 @@ export default class Ticket extends React.Component {
 			}
 
 			// TODO validate arrival/departure time;
-
 			this.setState({
 				cities,
 			});
@@ -168,14 +164,8 @@ export default class Ticket extends React.Component {
 	render() {
 
 		const orderedDestinations = sortTickets(this.state.tickets);
-
-		// console.log(this.state.cities);
 		const cities = populateCities([...this.state.cities], [...this.state.tickets]);
-
-		// console.log('populated cities', cities);
 		const sortedCities = cities.map(city => createRoutes(cities, city));
-		// console.log({sortedCities});
-
 		const possibleRoutes = sortedCities.map(city => city.routes.length ? routeEl(city) : '');
 
 		return (
@@ -186,24 +176,28 @@ export default class Ticket extends React.Component {
 				maxWidth="sm">
 				{this.state.tickets.map((ticket, index) => (
 					<Box key={`ticket-${index}`} my={4}>
-						<CardInner
-							title="departure"
-							inputId={`departureInput-${index}`}
-							currentName={ ticket.departureCity.name }
-							map={this.map}
-							mapBounds={this.mapBounds}
-							changeTicketCity={this.changeTicketData.bind(this, index, 'departureCity')}
-							setTime={this.changeTicketData.bind(this, index, 'departureTime')}
-						/>
-						<CardInner
-							title="arrival"
-							inputId={`arrivalInput-${index}`}
-							currentName={ ticket.arrivalCity.name }
-							map={this.map}
-							mapBounds={this.mapBounds}
-							changeTicketCity={this.changeTicketData.bind(this, index, 'arrivalCity')}
-							setTime={this.changeTicketData.bind(this, index, 'arrivalTime')}
-						/>
+						<Card>
+							<div>
+								<CardInner
+									title="departure"
+									inputId={`departureInput-${index}`}
+									currentName={ ticket.departureCity.name }
+									map={this.map}
+									mapBounds={this.mapBounds}
+									changeTicketCity={this.changeTicketData.bind(this, index, 'departureCity')}
+									setTime={this.changeTicketData.bind(this, index, 'departureTime')}
+								/>
+								<CardInner
+									title="arrival"
+									inputId={`arrivalInput-${index}`}
+									currentName={ ticket.arrivalCity.name }
+									map={this.map}
+									mapBounds={this.mapBounds}
+									changeTicketCity={this.changeTicketData.bind(this, index, 'arrivalCity')}
+									setTime={this.changeTicketData.bind(this, index, 'arrivalTime')}
+								/>
+							</div>
+						</Card>
 					</Box>
 				))}
 				<br/>
